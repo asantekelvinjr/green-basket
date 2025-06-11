@@ -82,8 +82,8 @@ const Cart = () => {
       } else {
         const { data } = await axios.post("/api/order/paystack", payload);
 
-        if (data.success && data.url) {
-          window.location.replace(data.url); // Redirect to Paystack
+        if (data.success && data?.paystack?.authorization_url) {
+          window.location.replace(data.paystack.authorization_url); // Redirect to Paystack
         } else {
           toast.error(data.message || "Payment initiation failed");
         }
@@ -129,7 +129,9 @@ const Cart = () => {
               <div
                 onClick={() => {
                   navigate(
-                    `/products/${product.category?.toLowerCase()}/${product._id}`
+                    `/products/${product.category?.toLowerCase()}/${
+                      product._id
+                    }`
                   );
                   scrollTo(0, 0);
                 }}
