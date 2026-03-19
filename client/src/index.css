@@ -14,3 +14,13 @@
 .no-scrollbar::-webkit-scrollbar{
   display: none;
 }
+
+.swiper-pagination-bullet {
+  background-color: #4fbf8b !important;
+  opacity: 0.5;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: #4fbf8b !important;
+  opacity: 1;
+}

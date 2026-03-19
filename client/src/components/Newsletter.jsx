@@ -1,24 +1,46 @@
-const Newsletter = () => {
-    
-    return (
-        <div className="flex flex-col items-center justify-center text-center space-y-2 mt-24 pb-14">
-            <h1 className="md:text-4xl text-2xl font-semibold">Never Miss a Deal!</h1>
-            <p className="md:text-lg text-gray-500/70 pb-8">
-                Subscribe to get the latest offers, new arrivals, and exclusive discounts
-            </p>
-            <form className="flex items-center justify-between max-w-2xl w-full md:h-13 h-12">
-                <input
-                    className="border border-gray-300 rounded-md h-full border-r-0 outline-none w-full rounded-r-none px-3 text-gray-500"
-                    type="text"
-                    placeholder="Enter your email id"
-                    required
-                />
-                <button type="submit" className="md:px-12 px-8 h-full text-white bg-primary hover:bg-primary-dull transition-all cursor-pointer rounded-md rounded-l-none">
-                    Subscribe
-                </button>
-            </form>
-        </div>
-    )
-}
+import React from "react";
 
-export default Newsletter; 
+const Newsletter = () => {
+  return (
+    <section className="mt-24 px-6 md:px-16 lg:px-24">
+      
+      <div className="bg-[#F6FFFB] border border-[#E0F5EC] rounded-2xl py-12 px-6 md:px-12 text-center shadow-sm">
+
+        {/* Heading */}
+        <h1 className="text-2xl md:text-4xl font-semibold text-gray-900">
+          Never Miss a Deal
+        </h1>
+
+        {/* Subtext */}
+        <p className="mt-3 text-gray-600 max-w-xl mx-auto text-sm md:text-base">
+          Get exclusive offers, early product drops, and special discounts straight to your inbox.
+        </p>
+
+        {/* Form */}
+        <form className="mt-8 max-w-xl mx-auto">
+          <div className="flex items-center bg-white border border-gray-200 rounded-full overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-primary/30 transition">
+
+            <input
+              type="email"
+              placeholder="Enter your email"
+              required
+              className="flex-1 px-5 py-3 outline-none text-sm text-gray-700"
+            />
+
+            <button
+              type="submit"
+              className="px-6 md:px-8 py-3 bg-primary text-white font-medium hover:bg-primary-dull transition"
+            >
+              Subscribe
+            </button> 
+
+          </div>
+        </form>
+
+      </div>
+
+    </section>
+  );
+};
+
+export default Newsletter;

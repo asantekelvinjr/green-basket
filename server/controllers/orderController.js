@@ -43,7 +43,7 @@ export const placeOrderPaystack = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid data" });
     }
 
-    // Checkif user exists
+    // Check if user exists
     const user = await User.findOne({ _id: userId });
     console.log(user);
     if (!user) {
@@ -132,13 +132,65 @@ export const placeOrderPaystack = async (req, res) => {
   }
 };
 
+// Verify Order Paystack: /api/order/verify-payment
+export const verifyOrderPayment = async (req, res) => {
+  try {
+    const { reference } = req.body;
+    // check if reference exists,else throw an error
+    if (!reference) {
+      res.status(400).json({ error: "Payment reference is required" });
+      return;
+    }
+
+    // Make request to paystack to verify payment
+    const response = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
+    );
+
+    const { data } = response.data;
+
+    // check if status is success
+    if (data?.status !== "success") {
+      // Throw an error saying payment failed
+      res.status(400).json({ error: "Payment verification failed" });
+      return;
+    }
+
+    // get order id from the transaction
+    const { metadata } = data;
+    const { order_id } = metadata;
+
+    // change the status of the order to paid or processing
+    const t = await Order.updateOne(
+      { _id: order_id },
+      { $set: { status: "paid" } }
+    );
+    console.log(t);
+    res.status(200).json({
+      success: true,
+      message: "Payment verification was successful.",
+      order_id,
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(400)
+      .json({ error: "An error occurred during payment verification." });
+    return;
+  }
+};
+
 //  Get Orders by User ID : /api/order/user
 export const getUserOrder = async (req, res) => {
   try {
     const { userId } = req.body;
     const orders = await Order.find({
       userId,
-      $or: [{ paymentType: "COD" }, { isPaid: true }],
     })
       .populate("items.product address")
       .sort({ createdAt: -1 });

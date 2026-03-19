@@ -20,7 +20,7 @@ export const AppContextProvider = ({children})=> {
     const [products,setProducts] = useState([])
 
     const [cartItems,setCartItems] = useState({})
-    const [searchQuery,setSearchQuery] = useState({})
+    const [searchQuery,setSearchQuery] = useState("")
 
     // Fetch seller status
     const fetchSeller = async () => {
@@ -51,7 +51,16 @@ export const AppContextProvider = ({children})=> {
 
 
     // Fetch All Products    
-    const fetchProducts = async () =>{
+
+// Fetching from front end assets
+//   const fetchProducts = async () =>{
+//     setProducts(dummyProducts)
+//   } 
+
+
+//   Fetching from database and uploaded images
+    
+  const fetchProducts = async () =>{
        try {
         const {data} = await axios.get('/api/product/list')
         if (data.success) {

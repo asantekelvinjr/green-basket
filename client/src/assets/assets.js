@@ -1,4 +1,4 @@
-import logo from "./logo.svg";
+import logo from "./greenbasket-logo.svg";
 import search_icon from "./search_icon.svg";
 import remove_icon from "./remove_icon.svg";
 import arrow_right_icon_colored from "./arrow_right_icon_colored.svg";
@@ -22,7 +22,7 @@ import black_arrow_icon from "./black_arrow_icon.svg";
 import white_arrow_icon from "./white_arrow_icon.svg";
 import main_banner_bg from "./main_banner_bg.png";
 import main_banner_bg_sm from "./main_banner_bg_sm.png";
-import bottom_banner_image from "./bottom_banner_image.png";
+import bottom_banner_image from "./bottom_banner_image.jpeg";
 import bottom_banner_image_sm from "./bottom_banner_image_sm.png";
 import add_address_iamge from "./add_address_image.svg";
 import organic_vegitable_image from "./organic_vegitable_image.png";
@@ -68,7 +68,12 @@ import whole_wheat_bread_image from "./whole_wheat_bread_image.png";
 import vanilla_muffins_image from "./vanilla_muffins_image.png";
 import quinoa_image from "./quinoa_image.png";
 import brown_rice_image from "./brown_rice_image.png";
-import barley_image from "./barley_image.png";
+import barley_image from "./hero-slider-3.jpg";
+import hero_slider_1 from "./hero-slide-bg.jpg";
+import hero_slider_1_sm from "./hero-slider-1-sm.png";
+import hero_slider_3 from "./hero-slider-3.jpg";
+
+
 
 export const assets = {
   logo,
@@ -98,6 +103,9 @@ export const assets = {
   bottom_banner_image_sm,
   add_address_iamge,
   box_icon,
+  hero_slider_1,
+  hero_slider_1_sm,
+  hero_slider_3,
 };
 
 export const categories = [
