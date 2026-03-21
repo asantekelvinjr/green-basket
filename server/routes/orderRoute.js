@@ -8,6 +8,7 @@ import {
   placeOrderCOD,
   placeOrderPaystack,
   verifyOrderPayment,
+  updateOrderStatus,
 } from "../controllers/orderController.js";
 
 import { paystackWebhook } from "../controllers/webhookController.js";
@@ -17,10 +18,14 @@ const orderRouter = express.Router();
 orderRouter.post("/cod", authUser, placeOrderCOD);
 orderRouter.post("/paystack", authUser, placeOrderPaystack);
 orderRouter.post("/verify-payment", authUser, verifyOrderPayment);
+
 orderRouter.get("/user", authUser, getUserOrder);
 orderRouter.get("/seller", authSeller, getAllOrders);
 
-// Paystack Webhook (no auth middleware)
+// 🔥 NEW
+orderRouter.put("/update-status", authSeller, updateOrderStatus);
+
+// webhook
 orderRouter.post(
   "/webhook/paystack",
   express.json({

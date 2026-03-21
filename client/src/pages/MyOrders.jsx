@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
-import { dummyOrders } from "../assets/assets";
 
 const MyOrders = () => {
   const [myOrders, setMyOrders] = useState([]);
+  const [filter, setFilter] = useState("ALL");
+
   const { currency, axios, user } = useAppContext();
 
   const fetchMyOrders = async () => {
@@ -22,61 +23,147 @@ const MyOrders = () => {
       fetchMyOrders();
     }
   }, [user]);
+
+  // 🔥 FILTER LOGIC
+  const filteredOrders = myOrders.filter((order) => {
+    if (filter === "ALL") return true;
+
+    if (filter === "PENDING")
+      return ["PLACED", "CONFIRMED"].includes(order.status);
+
+    if (filter === "READY") return order.status === "READY";
+
+    if (filter === "COMPLETED") return order.status === "COMPLETED";
+
+    if (filter === "CANCELLED") return order.status === "CANCELLED";
+
+    return true;
+  });
+
+  // 🔥 STATUS BADGE
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "PLACED":
+      case "CONFIRMED":
+        return "bg-yellow-100 text-yellow-700";
+      case "READY":
+        return "bg-blue-100 text-blue-700";
+      case "COMPLETED":
+        return "bg-green-100 text-green-700";
+      case "CANCELLED":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  const getPaymentStyle = (paymentStatus) => {
+    return paymentStatus === "PAID"
+      ? "bg-green-100 text-green-700"
+      : "bg-yellow-100 text-yellow-700";
+  };
+
   return (
     <div className="mt-16 pb-16">
+      {/* HEADER */}
       <div className="flex flex-col items-end w-max mb-8">
         <p className="text-2xl font-medium uppercase">My Orders</p>
-        <div className="w-16 h-0.5 bg-primary rounded-full"> </div>
+        <div className="w-16 h-0.5 bg-primary rounded-full"></div>
       </div>
 
-      {myOrders.map((order, index) => (
+      {/* 🔥 FILTER TABS */}
+      <div className="flex gap-3 mb-8 flex-wrap">
+        {["ALL", "PENDING", "READY", "COMPLETED", "CANCELLED"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setFilter(tab)}
+            className={`px-4 py-1.5 rounded-full text-sm border transition
+              ${
+                filter === tab
+                  ? "bg-primary text-white border-primary"
+                  : "border-gray-300 text-gray-600 hover:bg-gray-100"
+              }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* ORDERS */}
+      {filteredOrders.map((order, index) => (
         <div
           key={index}
-          className="border border-gray-300 rounded-lg mb-10 p-4 my-5 max-w-4xl"
+          className="border border-gray-200 rounded-xl mb-10 p-5 max-w-4xl shadow-sm hover:shadow-md transition"
         >
-          <p className="flex justify-between md:items-center text-gray-400 md:font-medium max-md:flex-col">
-            <span>OrderId : {order._id}</span>
-            <span>Payment : {order.paymentType}</span>
+          {/* ORDER HEADER */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center text-sm text-gray-500 gap-2 border-b border-black/10 pb-4 mb-4">
+            <span>Order ID: {order._id}</span>
+            <span>Payment: {order.paymentType}</span>
             <span>
-              Total Amount : {currency}
+              Total: {currency}
               {order.amount}
             </span>
-          </p>
+          </div>
+
+          {/* 🔥 STATUS + PAYMENT */}
+          <div className="flex gap-3 mb-4 flex-wrap">
+            <span
+              className={`px-3 py-1 text-xs rounded-full ${getStatusStyle(
+                order.status,
+              )}`}
+            >
+              {order.status}
+            </span>
+
+            <span
+              className={`px-3 py-1 text-xs rounded-full ${getPaymentStyle(
+                order.paymentStatus || "PENDING",
+              )}`}
+            >
+              {order.paymentStatus || "PENDING"}
+            </span>
+          </div>
+
+          {/* ITEMS */}
           {order.items.map((item, index) => (
             <div
               key={index}
-              className={`relative bg-white text-gray-500/70 ${
-                order.items.length !== index + 1 && "border-b"
-              }
-                border-gray-300 flex flex-col md:flex-row md:items-center justify-between p-4 my-5 md:gap-16 w-full max-w-4xl`}
+              className={`flex flex-col md:flex-row md:items-center justify-between gap-6 py-4 ${
+                order.items.length !== index + 1 && "border-b border-black/10"
+              }`}
             >
-              <div className="flex items-center mb-4 md:mb-0">
-                <div className="bg-primary/10 p-4 rounded-lg">
+              {/* LEFT */}
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg">
                   <img
                     src={item.product.image[0]}
                     alt=""
-                    className="w-16 h-16"
+                    className="w-16 h-16 object-contain"
                   />
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    {item.product.name}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {item.product.category}
+                  </p>
                 </div>
               </div>
 
-              <div className="ml-4">
-                <h2 className="text-xl font-medium text-gray-800">
-                  {" "}
-                  {item.product.name}{" "}
-                </h2>
-                <p>Category: {item.product.category}</p>
-              </div>
-
-              <div className="flex flex-col justify-center md:ml-8 md:mb-0">
-                <p cl>Quantity: {item.quantity || "1"}</p>
-                <p className="capitalize">Status: {order.status}</p>
+              {/* MIDDLE */}
+              <div className="text-sm text-gray-500 space-y-1">
+                <p>Qty: {item.quantity || 1}</p>
                 <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
               </div>
 
-              <p className="text-primary text-lg font-medium">
-                Amount: {currency} {item.product.offerPrice * item.quantity}
-              </p>
+              {/* RIGHT */}
+              <div className="text-right">
+                <p className="text-primary font-semibold text-lg">
+                  {currency} {item.product.offerPrice * item.quantity}
+                </p>
+              </div>
             </div>
           ))}
         </div>

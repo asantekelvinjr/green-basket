@@ -1,25 +1,35 @@
 import Order from "../models/order.js";
 import Product from "../models/product.js";
 import User from "../models/user.js";
-
 import axios from "axios";
 
-// Place Order COD : /api/order/cod
+// 🔥 HELPER: calculate total
+const calculateAmount = async (items) => {
+  let total = 0;
+
+  for (let item of items) {
+    const product = await Product.findById(item.product);
+    total += product.offerPrice * item.quantity;
+  }
+
+  // 2% tax
+  total += Math.floor(total * 0.02);
+
+  return total;
+};
+
+// =========================
+// ✅ PLACE ORDER COD
+// =========================
 export const placeOrderCOD = async (req, res) => {
   try {
     const { userId, items, address } = req.body;
+
     if (!address || items.length === 0) {
       return res.json({ success: false, message: "Invalid data" });
     }
 
-    // Calculate amount using items
-    let amount = await items.reduce(async (acc, item) => {
-      const product = await Product.findById(item.product);
-      return (await acc) + product.offerPrice * item.quantity;
-    }, 0);
-
-    // Add Tax charge 2%
-    amount += Math.floor(amount * 0.02);
+    const amount = await calculateAmount(items);
 
     await Order.create({
       userId,
@@ -27,43 +37,38 @@ export const placeOrderCOD = async (req, res) => {
       amount,
       address,
       paymentType: "COD",
+      paymentStatus: "PENDING",
+      status: "PLACED",
     });
-    return res.json({ success: true, message: "Order Placed Successfully" });
+
+    return res.json({
+      success: true,
+      message: "Order Placed Successfully",
+    });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
 };
 
-// Place Order Paystack: /api/order/paystack
+// =========================
+// ✅ PLACE ORDER PAYSTACK
+// =========================
 export const placeOrderPaystack = async (req, res) => {
   try {
     const { userId, items, address } = req.body;
-    const { origin } = req.headers;
+
     if (!address || items.length === 0) {
-      return res.status(401).json({ success: false, message: "Invalid data" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid data" });
     }
 
-    // Check if user exists
-    const user = await User.findOne({ _id: userId });
-    console.log(user);
+    const user = await User.findById(userId);
     if (!user) {
-      res.status(404).json({ success: false, message: "User not found" });
+      return res.json({ success: false, message: "User not found" });
     }
 
-    let productData = [];
-    // Calculate amount using items
-    let amount = await items.reduce(async (acc, item) => {
-      const product = await Product.findById(item.product);
-      productData.push({
-        name: product.name,
-        price: product.offerPrice,
-        quantity: item.quantity,
-      });
-      return (await acc) + product.offerPrice * item.quantity;
-    }, 0);
-
-    // Add Tax charge 2%
-    amount += Math.floor(amount * 0.02);
+    const amount = await calculateAmount(items);
 
     const order = await Order.create({
       userId,
@@ -71,78 +76,49 @@ export const placeOrderPaystack = async (req, res) => {
       amount,
       address,
       paymentType: "Online",
+      paymentStatus: "PENDING",
+      status: "PLACED",
     });
-
-    // PayStack Gateway Initialize
-    // const paystackInstance = new paystack(process.env.PAYSTACK_SECRET_KEY);
-
-    // Create line items for Paystack
-    // const line_items = productData.map((item) => {
-    //       return{
-    //         price_data: {
-    //             currency : "GH₵",
-    //             product_data: {
-    //                 name: item.name,
-    //             },
-    //             unit_amount : Math.floor(item.price + item.price * 0.02)*100
-    //         },
-    //         quantity:item.quantity,
-    //       }
-    // })
-
-    // // Create Session
-    // const session = await paystackInstance.checkout.sessions.create({
-    //     line_items,
-    //     mode: "payment",
-    //     success_url:  `${origin}/loader?next=my-orders`,
-    //     cancel_url:  `${origin}/cart`,
-    //     metadata: {
-    //         orderId : order._id.toString(),
-    //         userId,
-    //     }
-    // })
 
     const paystackData = {
       email: user.email,
-      amount,
+      amount: amount * 100, // 🔥 Paystack uses kobo/pesewas
       callback_url: `${process.env.CLIENT_URL}/my-orders/${order._id}/verify-payment`,
       metadata: {
         order_id: order._id,
-        custom_note: `Thank you for shopping with us!`,
       },
-    };
-
-    console.log(paystackData);
-    const headers = {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
     };
 
     const response = await axios.post(
       "https://api.paystack.co/transaction/initialize",
       paystackData,
-      { headers }
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        },
+      }
     );
 
-    return res
-      .status(200)
-      .json({ success: true, paystack: response.data.data });
+    return res.json({
+      success: true,
+      paystack: response.data.data,
+    });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ success: false, message: error.message });
+    return res.json({ success: false, message: error.message });
   }
 };
 
-// Verify Order Paystack: /api/order/verify-payment
+// =========================
+// ✅ VERIFY PAYMENT
+// =========================
 export const verifyOrderPayment = async (req, res) => {
   try {
     const { reference } = req.body;
-    // check if reference exists,else throw an error
+
     if (!reference) {
-      res.status(400).json({ error: "Payment reference is required" });
-      return;
+      return res.status(400).json({ error: "Reference required" });
     }
 
-    // Make request to paystack to verify payment
     const response = await axios.get(
       `https://api.paystack.co/transaction/verify/${reference}`,
       {
@@ -152,64 +128,98 @@ export const verifyOrderPayment = async (req, res) => {
       }
     );
 
-    const { data } = response.data;
+    const data = response.data.data;
 
-    // check if status is success
-    if (data?.status !== "success") {
-      // Throw an error saying payment failed
-      res.status(400).json({ error: "Payment verification failed" });
-      return;
+    if (data.status !== "success") {
+      return res.json({ success: false, message: "Payment failed" });
     }
 
-    // get order id from the transaction
-    const { metadata } = data;
-    const { order_id } = metadata;
+    const orderId = data.metadata.order_id;
 
-    // change the status of the order to paid or processing
-    const t = await Order.updateOne(
-      { _id: order_id },
-      { $set: { status: "paid" } }
-    );
-    console.log(t);
-    res.status(200).json({
+    await Order.findByIdAndUpdate(orderId, {
+      paymentStatus: "PAID",
+      status: "CONFIRMED",
+    });
+
+    return res.json({
       success: true,
-      message: "Payment verification was successful.",
-      order_id,
+      message: "Payment verified",
     });
   } catch (error) {
-    console.log(error);
-    res
-      .status(400)
-      .json({ error: "An error occurred during payment verification." });
-    return;
+    return res.json({ success: false, message: error.message });
   }
 };
 
-//  Get Orders by User ID : /api/order/user
+// =========================
+// ✅ UPDATE ORDER STATUS (ADMIN)
+// =========================
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId, status } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    const validFlow = ["PLACED", "CONFIRMED", "READY", "COMPLETED"];
+
+    const currentIndex = validFlow.indexOf(order.status);
+    const newIndex = validFlow.indexOf(status);
+
+    if (newIndex < currentIndex && status !== "CANCELLED") {
+      return res.json({
+        success: false,
+        message: "Invalid status transition",
+      });
+    }
+
+    // 🔥 COD auto paid on completion
+    if (order.paymentType === "COD" && status === "COMPLETED") {
+      order.paymentStatus = "PAID";
+    }
+
+    order.status = status;
+
+    await order.save();
+
+    return res.json({ success: true, message: "Order updated" });
+  } catch (error) {
+    return res.json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// ✅ USER ORDERS
+// =========================
 export const getUserOrder = async (req, res) => {
   try {
     const { userId } = req.body;
-    const orders = await Order.find({
-      userId,
-    })
+
+    const orders = await Order.find({ userId })
       .populate("items.product address")
       .sort({ createdAt: -1 });
+
     res.json({ success: true, orders });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    res.json({ success: false, message: error.message });
   }
 };
 
-// Get All Orders (for seller/ admin) : /api/order/seller
+// =========================
+// ✅ SELLER ORDERS
+// =========================
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      $or: [{ paymentType: "COD" }, { isPaid: true }],
+      $or: [{ paymentType: "COD" }, { paymentStatus: "PAID" }],
     })
       .populate("items.product address")
       .sort({ createdAt: -1 });
+
     res.json({ success: true, orders });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    res.json({ success: false, message: error.message });
   }
 };
