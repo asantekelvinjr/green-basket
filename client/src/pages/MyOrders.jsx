@@ -5,7 +5,7 @@ const MyOrders = () => {
   const [myOrders, setMyOrders] = useState([]);
   const [filter, setFilter] = useState("ALL");
 
-  const { currency, axios, user } = useAppContext();
+  const { currency, axios, user, navigate } = useAppContext();
 
   const fetchMyOrders = async () => {
     try {
@@ -93,7 +93,8 @@ const MyOrders = () => {
       {filteredOrders.map((order, index) => (
         <div
           key={index}
-          className="border border-gray-200 rounded-xl mb-10 p-5 max-w-4xl shadow-sm hover:shadow-md transition"
+          className="border border-gray-200 hover:border-primary hover:cursor-pointer rounded-xl mb-10 p-5 max-w-4xl shadow-sm hover:shadow-lg transition"
+          onClick={() => navigate(`/my-orders/${order._id}`)}
         >
           {/* ORDER HEADER */}
           <div className="flex flex-col md:flex-row md:justify-between md:items-center text-sm text-gray-500 gap-2 border-b border-black/10 pb-4 mb-4">
@@ -125,7 +126,7 @@ const MyOrders = () => {
           </div>
 
           {/* ITEMS */}
-          {order.items.map((item, index) => (
+          {order.items.slice(0,3).map((item, index) => (
             <div
               key={index}
               className={`flex flex-col md:flex-row md:items-center justify-between gap-6 py-4 ${

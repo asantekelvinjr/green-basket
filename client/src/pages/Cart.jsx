@@ -131,7 +131,7 @@ const Cart = () => {
                   navigate(
                     `/products/${product.category?.toLowerCase()}/${
                       product._id
-                    }`
+                    }`,
                   );
                   scrollTo(0, 0);
                 }}
@@ -143,13 +143,13 @@ const Cart = () => {
                   alt={product.name}
                 />
               </div>
-              <div>
+              <div cl>
                 <p className="hidden md:block font-semibold">{product.name}</p>
                 <div className="font-normal text-gray-500/70">
                   <p>Weight: {product.weight || "N/A"}</p>
-                  <div className="flex items-center">
+                  <div className="flex items-center mt-1">
                     <p>Qty:</p>
-                    <select
+                    {/* <select
                       onChange={(e) =>
                         updateCartItems(product._id, Number(e.target.value))
                       }
@@ -164,7 +164,20 @@ const Cart = () => {
                           {value}
                         </option>
                       ))}
-                    </select>
+                    </select> */}
+
+                    <input
+                      type="number"
+                      min={1}
+                      value={cartItems[product._id]}
+                      onChange={(e) =>
+                        updateCartItems(
+                          product._id,
+                          Math.max(1, Number(e.target.value)),
+                        )
+                      }
+                      className=" outline-none w-16 text-center border border-gray-300 rounded px-2"
+                    />
                   </div>
                 </div>
               </div>
@@ -294,8 +307,8 @@ const Cart = () => {
           {loading
             ? "Processing..."
             : paymentOption === "COD"
-            ? "Place Order"
-            : "Proceed to Checkout"}
+              ? "Place Order"
+              : "Proceed to Checkout"}
         </button>
       </div>
     </div>

@@ -28,6 +28,7 @@ import RefundPolicy from './pages/RefundPolicy';
 import PaymentMethods from './pages/PaymentMethods';
 import TrackOrders from './pages/TrackOrders';
 import OrderSupport from './pages/OrderSupport';
+import MyOrderDetails from './pages/MyOrderDetails';
 
 
 
@@ -73,7 +74,7 @@ const App = () => {
           <Route path='/payment-methods' element={<PaymentMethods />} />
           <Route path='/track-orders' element={<TrackOrders />} />
           <Route path='/order-support' element={<OrderSupport />} />
-
+          <Route path='/my-orders/:orderId' element={<MyOrderDetails />} />  
 
 
 
