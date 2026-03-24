@@ -223,3 +223,28 @@ export const getAllOrders = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+// =========================
+// ✅ GET SINGLE ORDER (TRACK)
+// =========================
+export const getOrderById = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    // Validate MongoDB ObjectId
+    if (!orderId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.json({ success: false, message: "Invalid Order ID" });
+    }
+
+    const order = await Order.findById(orderId)
+      .populate("items.product address");
+
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    return res.json({ success: true, order });
+  } catch (error) {
+    return res.json({ success: false, message: error.message });
+  }
+};

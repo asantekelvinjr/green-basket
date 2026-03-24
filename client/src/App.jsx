@@ -20,6 +20,14 @@ import Orders from './pages/seller/Orders';
 import Loading from './components/Loading';
 import VerifyPayment from './pages/VerifyPayment';
 import { useState ,useEffect} from 'react';
+import Contact from './pages/Contact';
+import FAQs from './pages/FAQs';
+import NotFound from './pages/NotFound';
+import DeliveryInformation from './pages/Delivery-Information';
+import RefundPolicy from './pages/RefundPolicy';
+import PaymentMethods from './pages/PaymentMethods';
+import TrackOrders from './pages/TrackOrders';
+import OrderSupport from './pages/OrderSupport';
 
 
 
@@ -58,6 +66,22 @@ const App = () => {
           <Route path='/loader' element={<Loading />} />
           <Route path='/my-orders/:orderId/verify-payment' element={<VerifyPayment />} />
           <Route path='/my-orders/verify-payment' element={<VerifyPayment />} />
+          <Route path='/contact-us' element={<Contact />} />
+          <Route path='/faqs' element={<FAQs />} />
+          <Route path='/delivery-information' element={<DeliveryInformation />} />
+          <Route path='/refund-policy' element={<RefundPolicy />} />
+          <Route path='/payment-methods' element={<PaymentMethods />} />
+          <Route path='/track-orders' element={<TrackOrders />} />
+          <Route path='/order-support' element={<OrderSupport />} />
+
+
+
+
+
+           {/* CATCH-ALL 404 ROUTE */}
+  <Route path='*' element={<NotFound />} />
+
+
 
           <Route path='/seller' element={isSeller ? <SellerLayout /> : <SellerLogin />}>
             <Route index element={isSeller ? <AddProduct /> : null} />

@@ -9,6 +9,7 @@ import {
   placeOrderPaystack,
   verifyOrderPayment,
   updateOrderStatus,
+  getOrderById ,
 } from "../controllers/orderController.js";
 
 import { paystackWebhook } from "../controllers/webhookController.js";
@@ -35,5 +36,7 @@ orderRouter.post(
   }),
   paystackWebhook
 );
+
+orderRouter.get("/track/:orderId", getOrderById);
 
 export default orderRouter;

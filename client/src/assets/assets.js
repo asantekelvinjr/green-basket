@@ -73,8 +73,6 @@ import hero_slider_1 from "./hero-slide-bg.jpg";
 import hero_slider_1_sm from "./hero-slider-1-sm.png";
 import hero_slider_3 from "./hero-slider-3.jpg";
 
-
-
 export const assets = {
   logo,
   search_icon,
@@ -157,30 +155,30 @@ export const footerLinks = [
   {
     title: "Quick Links",
     links: [
-      { text: "Home", url: "#" },
-      { text: "Best Sellers", url: "#" },
-      { text: "Offers & Deals", url: "#" },
-      { text: "Contact Us", url: "#" },
-      { text: "FAQs", url: "#" },
+      { text: "Home", url: "/" },
+      { text: "Best Sellers", url: "#best-seller" },
+      { text: "Contact Us", url: "/contact-us" },
+      { text: "FAQs", url: "/faqs" },
+      { text: "404", url: "/not-found" },
     ],
   },
   {
     title: "Need help?",
     links: [
-      { text: "Delivery Information", url: "#" },
-      { text: "Return & Refund Policy", url: "#" },
-      { text: "Payment Methods", url: "#" },
-      { text: "Track your Order", url: "#" },
-      { text: "Contact Us", url: "#" },
+      { text: "Delivery Information", url: "/delivery-information" },
+      { text: "Return & Refund Policy", url: "/refund-policy" },
+      { text: "Payment Methods", url: "/payment-methods" },
+      { text: "Track your Order", url: "/track-orders" },
+      { text: "Order Support", url: "/order-support" }
     ],
   },
   {
     title: "Follow Us",
     links: [
-      { text: "Instagram", url: "#" },
-      { text: "Twitter", url: "#" },
-      { text: "Facebook", url: "#" },
-      { text: "YouTube", url: "#" },
+      { text: "Instagram", url: "https://www.instagram.com/_aj.kel?igsh=MW5oNGd5dnN5ZDc1aQ==" },
+      { text: "Twitter", url: "https://x.com/asantekelvinjr" },
+      { text: "Facebook", url: "https://web.facebook.com/" },
+      { text: "YouTube", url: "https://youtube.com/@asantekelvinjr?si=WzQihH5Q7tx3VaIr" },
     ],
   },
 ];
@@ -205,6 +203,29 @@ export const features = [
     icon: trust_icon,
     title: "Trusted by Thousands",
     description: "Loved by 10,000+ happy customers.",
+  },
+];
+
+export const faqsData = [
+  {
+    question: "How long does delivery take?",
+    answer: "Orders are typically delivered within 30–45 minutes depending on your location.",
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept mobile money, debit/credit cards, and cash on delivery.",
+  },
+  {
+    question: "Can I track my order?",
+    answer: "Yes, you can track your order in real-time from your account dashboard.",
+  },
+  {
+    question: "Do you offer refunds?",
+    answer: "Yes, refunds are available for damaged or incorrect items delivered.",
+  },
+  {
+    question: "Is there a minimum order amount?",
+    answer: "No, you can order any quantity, but delivery fees may apply.",
   },
 ];
 

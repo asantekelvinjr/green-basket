@@ -50,7 +50,7 @@ const MainBanner = () => {
               <img
                 src={slide.bg}
                 alt="banner"
-                  className="w-full h-[400px] md:h-[400px] lg:h-[500px] object-cover hidden md:block"
+                  className="w-full h-[400px] md:h-[400px] lg:h-[500px] object-cover hidden md:block rounded-xl "
 
               />
 
