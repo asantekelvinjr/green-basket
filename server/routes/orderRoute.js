@@ -10,6 +10,7 @@ import {
   verifyOrderPayment,
   updateOrderStatus,
   getOrderById ,
+  cancelOrder ,
 } from "../controllers/orderController.js";
 
 import { paystackWebhook } from "../controllers/webhookController.js";
@@ -22,6 +23,7 @@ orderRouter.post("/verify-payment", authUser, verifyOrderPayment);
 
 orderRouter.get("/user", authUser, getUserOrder);
 orderRouter.get("/seller", authSeller, getAllOrders);
+orderRouter.put("/cancel", authUser, cancelOrder);
 
 // 🔥 NEW
 orderRouter.put("/update-status", authSeller, updateOrderStatus);

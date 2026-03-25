@@ -193,9 +193,23 @@ export const updateOrderStatus = async (req, res) => {
 // =========================
 // ✅ USER ORDERS
 // =========================
+// export const getUserOrder = async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+
+//     const orders = await Order.find({ userId })
+//       .populate("items.product address")
+//       .sort({ createdAt: -1 });
+
+//     res.json({ success: true, orders });
+//   } catch (error) {
+//     res.json({ success: false, message: error.message });
+//   }
+// };
+
 export const getUserOrder = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userId || req.body.userId || req.user?.id;
 
     const orders = await Order.find({ userId })
       .populate("items.product address")
@@ -231,11 +245,6 @@ export const getOrderById = async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    // Validate MongoDB ObjectId
-    if (!orderId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.json({ success: false, message: "Invalid Order ID" });
-    }
-
     const order = await Order.findById(orderId)
       .populate("items.product address");
 
@@ -244,6 +253,39 @@ export const getOrderById = async (req, res) => {
     }
 
     return res.json({ success: true, order });
+  } catch (error) {
+    return res.json({ success: false, message: error.message });
+  }
+};
+
+// =========================
+// ✅ CANCEL ORDER (USER)
+// =========================
+export const cancelOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.json({ success: false, message: "Order not found" });
+    }
+
+    // Only allow cancel if not processed yet
+    if (!["PLACED", "CONFIRMED"].includes(order.status)) {
+      return res.json({
+        success: false,
+        message: "Order cannot be cancelled",
+      });
+    }
+
+    order.status = "CANCELLED";
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Order cancelled successfully",
+    });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
