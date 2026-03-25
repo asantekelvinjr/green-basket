@@ -19,7 +19,7 @@ const slides = [
   },
   {
     bg: assets.hero_slider_3, // 👉 add in assets
-    bgSm: assets.main_banner_bg_sm,
+    bgSm: assets.hero_slider_3_sm,
     title: "Up to 50% Off Daily Essentials",
     btn1: "Shop Deals",
     btn2: "View Offers",
@@ -55,7 +55,7 @@ const MainBanner = () => {
               />
 
               {/* Mobile Image */}
-              <img src={slide.bgSm} alt="banner"  className="w-full h-[600px] object-cover md:hidden" />
+              <img src={slide.bgSm} alt="banner"  className="w-full h-[600px] object-cover md:hidden rounded-lg" />
 
               {/* Content */}
               <div

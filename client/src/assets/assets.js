@@ -70,8 +70,10 @@ import quinoa_image from "./quinoa_image.png";
 import brown_rice_image from "./brown_rice_image.png";
 import barley_image from "./hero-slider-3.jpg";
 import hero_slider_1 from "./hero-slide-bg.jpg";
-import hero_slider_1_sm from "./hero-slider-1-sm.png";
+import hero_slider_1_sm from "./hero-slider-1-sm.jpeg";
 import hero_slider_3 from "./hero-slider-3.jpg";
+import hero_slider_3_sm from "./hero-slider-3-sm.png";
+
 
 export const assets = {
   logo,
@@ -104,6 +106,7 @@ export const assets = {
   hero_slider_1,
   hero_slider_1_sm,
   hero_slider_3,
+  hero_slider_3_sm,
 };
 
 export const categories = [
