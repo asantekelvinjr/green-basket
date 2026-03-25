@@ -29,6 +29,7 @@ import PaymentMethods from './pages/PaymentMethods';
 import TrackOrders from './pages/TrackOrders';
 import OrderSupport from './pages/OrderSupport';
 import MyOrderDetails from './pages/MyOrderDetails';
+import MobileNavbar from './components/MobileNavbar';
 
 
 
@@ -50,7 +51,16 @@ const App = () => {
     <div className='text-default min-h-screen text-gray-700 bg-white'>
       {loading && <Loading />}
 
-      {!isSellerPath && <Navbar />}
+     {!isSellerPath && (
+  <>
+    <div className="hidden lg:block">
+      <Navbar />
+    </div>
+    <div className="lg:hidden">
+      <MobileNavbar />
+    </div>
+  </>
+)}
       {showUserLogin && <Login />}
 
       <Toaster />
