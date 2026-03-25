@@ -47,7 +47,7 @@ const App = () => {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
-  return (
+  return ( 
     <div className='text-default min-h-screen text-gray-700 bg-white'>
       {loading && <Loading />}
 
