@@ -18,7 +18,10 @@ await connectDB()
 // await connectCloudinary()
 
 // Allow multiple origins
-const allowedOrigins = ['http://localhost:5173']
+const allowedOrigins = [
+  'http://localhost:5173',                    // local dev
+  'https://green-basket-store.vercel.app'    // your Vercel frontend
+];
 
 // Middleware configuration
 app.use(express.json());
