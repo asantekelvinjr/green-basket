@@ -158,11 +158,11 @@ export const AppContextProvider = ({ children }) => {
 
   // --- Axios instance ---
   const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
-  console.log("AppContext: Using backend URL:", BASE_URL);
+  console.log("[AppContext] Backend URL:", BASE_URL);
 
   const api = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true,
+    withCredentials: true, // ✅ ensure cookies are sent
   });
 
   // --- State ---
@@ -173,68 +173,77 @@ export const AppContextProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- Fetch seller auth ---
-  const fetchSeller = async () => {
-    try {
-      console.log("fetchSeller: Checking seller auth...");
-      const { data } = await api.get("/api/seller/is-auth");
-      console.log("fetchSeller: Response:", data);
-      setIsSeller(!!data.success);
-    } catch (error) {
-      console.error("fetchSeller error:", error);
-      setIsSeller(false);
-    }
-  };
-
   // --- Fetch user auth ---
   const fetchUser = async () => {
     try {
-      console.log("fetchUser: Checking user auth...");
+      console.log("[fetchUser] Checking user auth...");
       const { data } = await api.get("/api/user/is-auth");
-      console.log("fetchUser: Response:", data);
-      if (data.success) {
+      console.log("[fetchUser] Response:", data);
+
+      if (data.success && data.user) {
         setUser(data.user);
         setCartItems(data.user.cartItems || {});
       } else {
         setUser(null);
       }
     } catch (error) {
-      console.error("fetchUser error:", error);
+      console.error("[fetchUser] Error:", error);
       setUser(null);
+    }
+  };
+
+  // --- Fetch seller auth ---
+  const fetchSeller = async () => {
+    try {
+      console.log("[fetchSeller] Checking seller auth...");
+      const { data } = await api.get("/api/seller/is-auth");
+      console.log("[fetchSeller] Response:", data);
+      setIsSeller(!!data.success);
+    } catch (error) {
+      console.error("[fetchSeller] Error:", error);
+      setIsSeller(false);
     }
   };
 
   // --- Login ---
   const loginUser = async (email, password) => {
     try {
-      console.log("loginUser: Posting login request", { email });
+      console.log("[loginUser] Sending login request", { email });
       const { data } = await api.post("/api/user/login", { email, password });
-      console.log("loginUser: Response:", data);
-      if (data.success) {
+      console.log("[loginUser] Response:", data);
+
+      if (data.success && data.user) {
         setUser(data.user);
+        setCartItems(data.user.cartItems || {});
         setShowUserLogin(false);
         toast.success("Logged in successfully!");
       } else {
         toast.error(data.message || "Login failed");
       }
     } catch (error) {
-      console.error("loginUser error:", error);
-      toast.error(error.response?.data?.message || error.message || "Login failed");
+      console.error("[loginUser] Error:", error);
+      toast.error(
+        error.response?.data?.message || error.message || "Login failed"
+      );
     }
   };
 
   // --- Logout ---
   const logoutUser = async () => {
     try {
-      console.log("logoutUser: Logging out...");
+      console.log("[logoutUser] Logging out...");
       const { data } = await api.get("/api/user/logout");
-      console.log("logoutUser: Response:", data);
+      console.log("[logoutUser] Response:", data);
+
       if (data.success) {
         setUser(null);
+        setCartItems({});
         toast.success("Logged out successfully!");
+      } else {
+        toast.error(data.message || "Logout failed");
       }
     } catch (error) {
-      console.error("logoutUser error:", error);
+      console.error("[logoutUser] Error:", error);
       toast.error(error.response?.data?.message || error.message || "Logout failed");
     }
   };
@@ -242,34 +251,38 @@ export const AppContextProvider = ({ children }) => {
   // --- Fetch products ---
   const fetchProducts = async () => {
     try {
-      console.log("fetchProducts: Fetching products...");
+      console.log("[fetchProducts] Fetching products...");
       const { data } = await api.get("/api/product/list");
-      console.log("fetchProducts: Response:", data);
-      if (data.success) setProducts(data.products);
-      else toast.error(data.message);
+      console.log("[fetchProducts] Response:", data);
+
+      if (data.success && Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        toast.error(data.message || "Failed to fetch products");
+      }
     } catch (error) {
-      console.error("fetchProducts error:", error);
+      console.error("[fetchProducts] Error:", error);
       toast.error(error.response?.data?.message || error.message || "Failed to fetch products");
     }
   };
 
   // --- Cart functions ---
   const addToCart = (itemId) => {
-    console.log("addToCart:", itemId);
+    console.log("[addToCart]", itemId);
     const newCart = { ...cartItems, [itemId]: (cartItems[itemId] || 0) + 1 };
     setCartItems(newCart);
     toast.success("Added to cart");
   };
 
   const updateCartItems = (itemId, quantity) => {
-    console.log("updateCartItems:", itemId, quantity);
+    console.log("[updateCartItems]", itemId, quantity);
     const newCart = { ...cartItems, [itemId]: quantity };
     setCartItems(newCart);
     toast.success("Cart updated");
   };
 
   const removeFromCart = (itemId) => {
-    console.log("removeFromCart:", itemId);
+    console.log("[removeFromCart]", itemId);
     const newCart = { ...cartItems };
     if (newCart[itemId] > 1) newCart[itemId] -= 1;
     else delete newCart[itemId];
@@ -291,15 +304,16 @@ export const AppContextProvider = ({ children }) => {
   // --- Sync cart to backend ---
   useEffect(() => {
     if (!user) return;
-    console.log("Cart changed, syncing to backend...", cartItems);
 
+    console.log("[CartSync] Cart changed, syncing to backend...", cartItems);
     const updateCart = async () => {
       try {
         const { data } = await api.post("/api/cart/update", { cartItems });
-        console.log("updateCart response:", data);
-        if (!data.success) toast.error(data.message);
+        console.log("[CartSync] Response:", data);
+
+        if (!data.success) toast.error(data.message || "Failed to update cart");
       } catch (error) {
-        console.error("updateCart error:", error);
+        console.error("[CartSync] Error:", error);
         toast.error(error.response?.data?.message || error.message || "Failed to update cart");
       }
     };
