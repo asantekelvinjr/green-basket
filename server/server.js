@@ -1,9 +1,10 @@
-import cookieParser from 'cookie-parser';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import connectDB from './configs/db.js';
-import connectCloudinary from './configs/cloudinary.js';
 import 'dotenv/config';
+
+import connectDB from './configs/db.js';
+// import connectCloudinary from './configs/cloudinary.js';
 
 import userRouter from './routes/userRoute.js';
 import sellerRouter from './routes/sellerRoute.js';
@@ -19,38 +20,52 @@ const port = process.env.PORT || 4000;
 await connectDB();
 // await connectCloudinary();
 
-// --- Trust proxy for Render (cookies work behind proxy) ---
+// --- Trust proxy for secure cookies behind Render ---
 app.set('trust proxy', 1);
 
 // --- CORS setup ---
 const allowedOrigins = [
-  'http://localhost:5173',                    // local dev
-  'https://green-basket-store.vercel.app'    // Vercel frontend
+  'http://localhost:5173',                   // local dev
+  'https://green-basket-store.vercel.app',  // Vercel frontend
 ];
 
 app.use(cors({
-  origin: function(origin, callback){
-    if(!origin) return callback(null, true); // allow non-browser requests like Postman
-    if(allowedOrigins.indexOf(origin) === -1){
-      return callback(new Error('CORS policy does not allow this origin.'), false);
-    }
-    return callback(null, true);
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // allow Postman or server requests
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    console.log('[CORS] Blocked origin:', origin);
+    return callback(new Error('CORS policy does not allow this origin.'), false);
   },
-  credentials: true
+  credentials: true, // allow cookies to be sent
 }));
 
 // --- Middleware ---
 app.use(express.json());
 app.use(cookieParser());
 
-// --- Routes ---
+// --- Test endpoint ---
 app.get('/', (req, res) => res.send('API is working'));
+app.get('/api/debug-cookies', (req, res) => {
+  console.log('[Debug] Cookies:', req.cookies);
+  res.json({ cookies: req.cookies });
+});
+
+// --- Routes ---
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/address', addressRouter);
 app.use('/api/order', orderRouter);
+
+// --- 404 handler ---
+app.use((req, res) => res.status(404).json({ success: false, message: 'Endpoint not found' }));
+
+// --- Error handler ---
+app.use((err, req, res, next) => {
+  console.error('[Server Error]', err.message);
+  res.status(500).json({ success: false, message: err.message });
+});
 
 // --- Start server ---
 app.listen(port, () => {

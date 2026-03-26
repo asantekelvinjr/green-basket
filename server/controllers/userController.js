@@ -3,8 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 // Helper: log object safely
-const log = (label, obj) =>
-  console.log(`[UserController] ${label}:`, JSON.stringify(obj, null, 2));
+const log = (label, obj) => console.log(`[UserController] ${label}:`, JSON.stringify(obj, null, 2));
 
 // --- Register User ---
 export const register = async (req, res) => {
@@ -28,19 +27,15 @@ export const register = async (req, res) => {
     const user = await User.create({ name, email, password: hashedPassword });
     log("User created", { id: user._id, email: user.email });
 
-    // --- JWT Token ---
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     log("Token generated", { token });
 
-    // --- Cookie Options ---
     const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      secure: isProduction, // must be HTTPS in prod
-      sameSite: isProduction ? "none" : "lax", // none for cross-site in prod
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.json({ success: true, user: { email: user.email, name: user.name } });
@@ -96,7 +91,7 @@ export const login = async (req, res) => {
 // --- Check Auth ---
 export const isAuth = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.userId;
     log("Check auth", { userId });
 
     if (!userId) {

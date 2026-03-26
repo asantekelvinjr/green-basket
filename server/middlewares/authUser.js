@@ -5,7 +5,7 @@ const log = (label, obj) => console.log(`[AuthMiddleware] ${label}:`, JSON.strin
 
 const authUser = (req, res, next) => {
   try {
-    const { token } = req.cookies;
+    const token = req.cookies?.token;
     log("Incoming token", { token });
 
     if (!token) {
@@ -22,17 +22,14 @@ const authUser = (req, res, next) => {
       return res.json({ success: false, message: "Invalid or expired token" });
     }
 
-    // Ensure req.body exists
-    if (!req.body) req.body = {};
-
     if (!decoded.id) {
       log("Auth failed: token did not contain user ID");
       return res.json({ success: false, message: "Not Authorized" });
     }
 
     // Attach userId to request for downstream controllers
-    req.body.userId = decoded.id;
-    log("User ID attached to request", { userId: req.body.userId });
+    req.userId = decoded.id;
+    log("User ID attached to request", { userId: req.userId });
 
     next();
   } catch (error) {
