@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 // Helper: log object safely
-const log = (label, obj) => console.log(`[UserController] ${label}:`, JSON.stringify(obj, null, 2));
+const log = (label, obj) =>
+  console.log(`[UserController] ${label}:`, JSON.stringify(obj, null, 2));
 
 // --- Register User ---
 export const register = async (req, res) => {
@@ -27,13 +28,18 @@ export const register = async (req, res) => {
     const user = await User.create({ name, email, password: hashedPassword });
     log("User created", { id: user._id, email: user.email });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    // --- JWT Token ---
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
     log("Token generated", { token });
 
+    // --- Cookie Options ---
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      secure: isProduction, // must be HTTPS in prod
+      sameSite: isProduction ? "none" : "lax", // none for cross-site in prod
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
     });
 
@@ -72,10 +78,11 @@ export const login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
     log("Token generated for login", { token });
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -112,10 +119,11 @@ export const logout = async (req, res) => {
   try {
     log("Logout attempt");
 
+    const isProduction = process.env.NODE_ENV === "production";
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
     });
 
     return res.json({ success: true, message: "Logged Out" });

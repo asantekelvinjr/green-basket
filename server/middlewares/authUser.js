@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 
-// Debug logging helper
+// --- Debug logging helper ---
 const log = (label, obj) => console.log(`[AuthMiddleware] ${label}:`, JSON.stringify(obj, null, 2));
 
-const authUser = async (req, res, next) => {
+const authUser = (req, res, next) => {
   try {
     const { token } = req.cookies;
     log("Incoming token", { token });
@@ -13,10 +13,10 @@ const authUser = async (req, res, next) => {
       return res.json({ success: false, message: "Not Authorized" });
     }
 
-    let tokenDecode;
+    let decoded;
     try {
-      tokenDecode = jwt.verify(token, process.env.JWT_SECRET);
-      log("Token decoded successfully", tokenDecode);
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      log("Token decoded successfully", decoded);
     } catch (err) {
       log("Token verification failed", { error: err.message });
       return res.json({ success: false, message: "Invalid or expired token" });
@@ -25,16 +25,18 @@ const authUser = async (req, res, next) => {
     // Ensure req.body exists
     if (!req.body) req.body = {};
 
-    if (tokenDecode.id) {
-      req.body.userId = tokenDecode.id;
-      log("User ID attached to request", { userId: req.body.userId });
-      next();
-    } else {
+    if (!decoded.id) {
       log("Auth failed: token did not contain user ID");
       return res.json({ success: false, message: "Not Authorized" });
     }
+
+    // Attach userId to request for downstream controllers
+    req.body.userId = decoded.id;
+    log("User ID attached to request", { userId: req.body.userId });
+
+    next();
   } catch (error) {
-    log("Auth middleware error", { message: error.message });
+    log("Auth middleware unexpected error", { message: error.message });
     return res.json({ success: false, message: "Auth middleware error" });
   }
 };
