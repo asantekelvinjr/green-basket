@@ -1,16 +1,20 @@
+// src/middleware/authUser.js
 import jwt from "jsonwebtoken";
 
 // --- Debug logging helper ---
-const log = (label, obj) => console.log(`[AuthMiddleware] ${label}:`, JSON.stringify(obj, null, 2));
+const log = (label, obj) =>
+  console.log(`[AuthMiddleware] ${label}:`, JSON.stringify(obj, null, 2));
 
 const authUser = (req, res, next) => {
   try {
-    const token = req.cookies?.token;
-    log("Incoming token", { token });
+    // --- Ensure cookies object exists ---
+    const cookies = req.cookies || {};
+    log("Incoming cookies", cookies);
 
+    const token = cookies.token;
     if (!token) {
       log("Auth failed: No token found in cookies");
-      return res.json({ success: false, message: "Not Authorized" });
+      return res.status(401).json({ success: false, message: "Not Authorized" });
     }
 
     let decoded;
@@ -19,22 +23,25 @@ const authUser = (req, res, next) => {
       log("Token decoded successfully", decoded);
     } catch (err) {
       log("Token verification failed", { error: err.message });
-      return res.json({ success: false, message: "Invalid or expired token" });
+      return res.status(401).json({ success: false, message: "Invalid or expired token" });
     }
+
+    // Ensure req.body exists
+    if (!req.body) req.body = {};
 
     if (!decoded.id) {
       log("Auth failed: token did not contain user ID");
-      return res.json({ success: false, message: "Not Authorized" });
+      return res.status(401).json({ success: false, message: "Not Authorized" });
     }
 
-    // Attach userId to request for downstream controllers
-    req.userId = decoded.id;
-    log("User ID attached to request", { userId: req.userId });
+    // --- Attach userId for downstream controllers ---
+    req.body.userId = decoded.id;
+    log("User ID attached to request", { userId: req.body.userId });
 
     next();
   } catch (error) {
     log("Auth middleware unexpected error", { message: error.message });
-    return res.json({ success: false, message: "Auth middleware error" });
+    return res.status(500).json({ success: false, message: "Auth middleware error" });
   }
 };
 
