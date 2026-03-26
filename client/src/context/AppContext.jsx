@@ -148,7 +148,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import api from "@/lib/api"; // ✅ use shared Axios instance
+import api from "../lib/api"; // ✅ use shared Axios instance
 
 // --- Create context ---
 export const AppContext = createContext();
