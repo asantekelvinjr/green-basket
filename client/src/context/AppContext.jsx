@@ -149,21 +149,22 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 
+// --- Create context ---
 export const AppContext = createContext();
 
+// --- Provider ---
 export const AppContextProvider = ({ children }) => {
   const navigate = useNavigate();
-
   const currency = import.meta.env.VITE_CURRENCY || "₵";
 
-  // --- Axios setup ---
+  // --- Axios instance ---
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   if (!BASE_URL) {
     console.error("VITE_BACKEND_URL is not set! Login will fail in production.");
   }
   const api = axios.create({
-    baseURL: BASE_URL,
-    withCredentials: true, // send cookies
+    baseURL: BASE_URL || "http://localhost:4000",
+    withCredentials: true, // allow cookies
   });
 
   // --- State ---
@@ -185,7 +186,7 @@ export const AppContextProvider = ({ children }) => {
         setUser(null);
       }
     } catch (error) {
-      console.error(error);
+      console.error("fetchUser error:", error);
       setUser(null);
     }
   };
@@ -201,6 +202,7 @@ export const AppContextProvider = ({ children }) => {
         toast.error(data.message || "Login failed");
       }
     } catch (error) {
+      console.error("loginUser error:", error);
       toast.error(error.message || "Login failed");
     }
   };
@@ -213,32 +215,34 @@ export const AppContextProvider = ({ children }) => {
         toast.success("Logged out successfully!");
       }
     } catch (error) {
+      console.error("logoutUser error:", error);
       toast.error(error.message || "Logout failed");
     }
   };
 
-  // --- Products ---
+  // --- Product functions ---
   const fetchProducts = async () => {
     try {
       const { data } = await api.get("/api/product/list");
       if (data.success) setProducts(data.products);
       else toast.error(data.message);
     } catch (error) {
-      toast.error(error.message);
+      console.error("fetchProducts error:", error);
+      toast.error(error.message || "Failed to fetch products");
     }
   };
 
-  // --- Cart ---
+  // --- Cart functions ---
   const addToCart = (itemId) => {
     const newCart = { ...cartItems, [itemId]: (cartItems[itemId] || 0) + 1 };
     setCartItems(newCart);
-    toast.success("Added to Cart");
+    toast.success("Added to cart");
   };
 
   const updateCartItems = (itemId, quantity) => {
     const newCart = { ...cartItems, [itemId]: quantity };
     setCartItems(newCart);
-    toast.success("Cart Updated");
+    toast.success("Cart updated");
   };
 
   const removeFromCart = (itemId) => {
@@ -246,7 +250,7 @@ export const AppContextProvider = ({ children }) => {
     if (newCart[itemId] > 1) newCart[itemId] -= 1;
     else delete newCart[itemId];
     setCartItems(newCart);
-    toast.success("Removed from Cart");
+    toast.success("Removed from cart");
   };
 
   const getCartCount = () =>
@@ -261,7 +265,7 @@ export const AppContextProvider = ({ children }) => {
     return Math.floor(total * 100) / 100;
   };
 
-  // --- Sync cart with backend ---
+  // --- Sync cart to backend when it changes ---
   useEffect(() => {
     if (!user) return;
 
@@ -270,11 +274,13 @@ export const AppContextProvider = ({ children }) => {
         const { data } = await api.post("/api/cart/update", { cartItems });
         if (!data.success) toast.error(data.message);
       } catch (error) {
-        toast.error(error.message);
+        console.error("updateCart error:", error);
+        toast.error(error.message || "Failed to update cart");
       }
     };
+
     updateCart();
-  }, [cartItems]);
+  }, [cartItems, user]);
 
   // --- Initial fetch ---
   useEffect(() => {
@@ -282,6 +288,7 @@ export const AppContextProvider = ({ children }) => {
     fetchProducts();
   }, []);
 
+  // --- Context value ---
   const value = {
     navigate,
     user,
@@ -308,4 +315,5 @@ export const AppContextProvider = ({ children }) => {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
+// --- Hook to use context ---
 export const useAppContext = () => useContext(AppContext);
