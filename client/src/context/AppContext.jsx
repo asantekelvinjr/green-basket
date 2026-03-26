@@ -156,11 +156,14 @@ export const AppContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const currency = import.meta.env.VITE_CURRENCY || "₵";
 
-  // --- Axios defaults (global, like old version) ---
+  // --- Axios instance ---
   const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
   console.log("AppContext: Using backend URL:", BASE_URL);
-  axios.defaults.baseURL = BASE_URL;
-  axios.defaults.withCredentials = true;
+
+  const api = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true,
+  });
 
   // --- State ---
   const [user, setUser] = useState(null);
@@ -174,7 +177,7 @@ export const AppContextProvider = ({ children }) => {
   const fetchSeller = async () => {
     try {
       console.log("fetchSeller: Checking seller auth...");
-      const { data } = await axios.get("/api/seller/is-auth");
+      const { data } = await api.get("/api/seller/is-auth");
       console.log("fetchSeller: Response:", data);
       setIsSeller(!!data.success);
     } catch (error) {
@@ -187,7 +190,7 @@ export const AppContextProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       console.log("fetchUser: Checking user auth...");
-      const { data } = await axios.get("/api/user/is-auth");
+      const { data } = await api.get("/api/user/is-auth");
       console.log("fetchUser: Response:", data);
       if (data.success) {
         setUser(data.user);
@@ -205,7 +208,7 @@ export const AppContextProvider = ({ children }) => {
   const loginUser = async (email, password) => {
     try {
       console.log("loginUser: Posting login request", { email });
-      const { data } = await axios.post("/api/user/login", { email, password });
+      const { data } = await api.post("/api/user/login", { email, password });
       console.log("loginUser: Response:", data);
       if (data.success) {
         setUser(data.user);
@@ -224,7 +227,7 @@ export const AppContextProvider = ({ children }) => {
   const logoutUser = async () => {
     try {
       console.log("logoutUser: Logging out...");
-      const { data } = await axios.get("/api/user/logout");
+      const { data } = await api.get("/api/user/logout");
       console.log("logoutUser: Response:", data);
       if (data.success) {
         setUser(null);
@@ -240,7 +243,7 @@ export const AppContextProvider = ({ children }) => {
   const fetchProducts = async () => {
     try {
       console.log("fetchProducts: Fetching products...");
-      const { data } = await axios.get("/api/product/list");
+      const { data } = await api.get("/api/product/list");
       console.log("fetchProducts: Response:", data);
       if (data.success) setProducts(data.products);
       else toast.error(data.message);
@@ -285,14 +288,14 @@ export const AppContextProvider = ({ children }) => {
     return Math.floor(total * 100) / 100;
   };
 
-  // --- Sync cart to backend when cartItems changes ---
+  // --- Sync cart to backend ---
   useEffect(() => {
     if (!user) return;
     console.log("Cart changed, syncing to backend...", cartItems);
 
     const updateCart = async () => {
       try {
-        const { data } = await axios.post("/api/cart/update", { cartItems });
+        const { data } = await api.post("/api/cart/update", { cartItems });
         console.log("updateCart response:", data);
         if (!data.success) toast.error(data.message);
       } catch (error) {
