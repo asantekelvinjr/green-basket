@@ -152,20 +152,15 @@ import axios from "axios";
 // --- Create context ---
 export const AppContext = createContext();
 
-// --- Provider ---
 export const AppContextProvider = ({ children }) => {
   const navigate = useNavigate();
   const currency = import.meta.env.VITE_CURRENCY || "₵";
 
-  // --- Axios instance ---
-  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-  if (!BASE_URL) {
-    console.error("VITE_BACKEND_URL is not set! Login will fail in production.");
-  }
-  const api = axios.create({
-    baseURL: BASE_URL || "http://localhost:4000",
-    withCredentials: true, // allow cookies
-  });
+  // --- Axios defaults (global, like old version) ---
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+  console.log("AppContext: Using backend URL:", BASE_URL);
+  axios.defaults.baseURL = BASE_URL;
+  axios.defaults.withCredentials = true;
 
   // --- State ---
   const [user, setUser] = useState(null);
@@ -175,10 +170,25 @@ export const AppContextProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- Auth functions ---
+  // --- Fetch seller auth ---
+  const fetchSeller = async () => {
+    try {
+      console.log("fetchSeller: Checking seller auth...");
+      const { data } = await axios.get("/api/seller/is-auth");
+      console.log("fetchSeller: Response:", data);
+      setIsSeller(!!data.success);
+    } catch (error) {
+      console.error("fetchSeller error:", error);
+      setIsSeller(false);
+    }
+  };
+
+  // --- Fetch user auth ---
   const fetchUser = async () => {
     try {
-      const { data } = await api.get("/api/user/is-auth");
+      console.log("fetchUser: Checking user auth...");
+      const { data } = await axios.get("/api/user/is-auth");
+      console.log("fetchUser: Response:", data);
       if (data.success) {
         setUser(data.user);
         setCartItems(data.user.cartItems || {});
@@ -191,9 +201,12 @@ export const AppContextProvider = ({ children }) => {
     }
   };
 
+  // --- Login ---
   const loginUser = async (email, password) => {
     try {
-      const { data } = await api.post("/api/user/login", { email, password });
+      console.log("loginUser: Posting login request", { email });
+      const { data } = await axios.post("/api/user/login", { email, password });
+      console.log("loginUser: Response:", data);
       if (data.success) {
         setUser(data.user);
         setShowUserLogin(false);
@@ -203,49 +216,57 @@ export const AppContextProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("loginUser error:", error);
-      toast.error(error.message || "Login failed");
+      toast.error(error.response?.data?.message || error.message || "Login failed");
     }
   };
 
+  // --- Logout ---
   const logoutUser = async () => {
     try {
-      const { data } = await api.get("/api/user/logout");
+      console.log("logoutUser: Logging out...");
+      const { data } = await axios.get("/api/user/logout");
+      console.log("logoutUser: Response:", data);
       if (data.success) {
         setUser(null);
         toast.success("Logged out successfully!");
       }
     } catch (error) {
       console.error("logoutUser error:", error);
-      toast.error(error.message || "Logout failed");
+      toast.error(error.response?.data?.message || error.message || "Logout failed");
     }
   };
 
-  // --- Product functions ---
+  // --- Fetch products ---
   const fetchProducts = async () => {
     try {
-      const { data } = await api.get("/api/product/list");
+      console.log("fetchProducts: Fetching products...");
+      const { data } = await axios.get("/api/product/list");
+      console.log("fetchProducts: Response:", data);
       if (data.success) setProducts(data.products);
       else toast.error(data.message);
     } catch (error) {
       console.error("fetchProducts error:", error);
-      toast.error(error.message || "Failed to fetch products");
+      toast.error(error.response?.data?.message || error.message || "Failed to fetch products");
     }
   };
 
   // --- Cart functions ---
   const addToCart = (itemId) => {
+    console.log("addToCart:", itemId);
     const newCart = { ...cartItems, [itemId]: (cartItems[itemId] || 0) + 1 };
     setCartItems(newCart);
     toast.success("Added to cart");
   };
 
   const updateCartItems = (itemId, quantity) => {
+    console.log("updateCartItems:", itemId, quantity);
     const newCart = { ...cartItems, [itemId]: quantity };
     setCartItems(newCart);
     toast.success("Cart updated");
   };
 
   const removeFromCart = (itemId) => {
+    console.log("removeFromCart:", itemId);
     const newCart = { ...cartItems };
     if (newCart[itemId] > 1) newCart[itemId] -= 1;
     else delete newCart[itemId];
@@ -253,8 +274,7 @@ export const AppContextProvider = ({ children }) => {
     toast.success("Removed from cart");
   };
 
-  const getCartCount = () =>
-    Object.values(cartItems).reduce((acc, qty) => acc + qty, 0);
+  const getCartCount = () => Object.values(cartItems).reduce((acc, qty) => acc + qty, 0);
 
   const getCartAmount = () => {
     let total = 0;
@@ -265,17 +285,19 @@ export const AppContextProvider = ({ children }) => {
     return Math.floor(total * 100) / 100;
   };
 
-  // --- Sync cart to backend when it changes ---
+  // --- Sync cart to backend when cartItems changes ---
   useEffect(() => {
     if (!user) return;
+    console.log("Cart changed, syncing to backend...", cartItems);
 
     const updateCart = async () => {
       try {
-        const { data } = await api.post("/api/cart/update", { cartItems });
+        const { data } = await axios.post("/api/cart/update", { cartItems });
+        console.log("updateCart response:", data);
         if (!data.success) toast.error(data.message);
       } catch (error) {
         console.error("updateCart error:", error);
-        toast.error(error.message || "Failed to update cart");
+        toast.error(error.response?.data?.message || error.message || "Failed to update cart");
       }
     };
 
@@ -285,20 +307,20 @@ export const AppContextProvider = ({ children }) => {
   // --- Initial fetch ---
   useEffect(() => {
     fetchUser();
+    fetchSeller();
     fetchProducts();
   }, []);
 
-  // --- Context value ---
   const value = {
     navigate,
     user,
     setUser,
-    loginUser,
-    logoutUser,
     isSeller,
     setIsSeller,
     showUserLogin,
     setShowUserLogin,
+    loginUser,
+    logoutUser,
     products,
     currency,
     cartItems,
@@ -315,5 +337,4 @@ export const AppContextProvider = ({ children }) => {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
-// --- Hook to use context ---
 export const useAppContext = () => useContext(AppContext);
