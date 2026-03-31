@@ -30,6 +30,7 @@ import TrackOrders from './pages/TrackOrders';
 import OrderSupport from './pages/OrderSupport';
 import MyOrderDetails from './pages/MyOrderDetails';
 import MobileNavbar from './components/MobileNavbar';
+import Profile from './pages/Profile';
 
 
 
@@ -85,6 +86,7 @@ const App = () => {
           <Route path='/track-orders' element={<TrackOrders />} />
           <Route path='/order-support' element={<OrderSupport />} />
           <Route path='/my-orders/:orderId' element={<MyOrderDetails />} />  
+          <Route path='/profile' element={<Profile />} />  
 
 
 
