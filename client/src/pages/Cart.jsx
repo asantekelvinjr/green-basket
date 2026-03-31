@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
+import api from "../lib/api";
 import toast from "react-hot-toast";
 
 const Cart = () => {
   const {
-    products,
-    currency,
-    cartItems,
-    removeFromCart,
-    getCartCount,
-    updateCartItems,
-    navigate,
-    getCartAmount,
-    axios,
-    user,
-    setCartItems,
+    products, currency, cartItems, removeFromCart,
+    getCartCount, updateCartItems, navigate,
+    getCartAmount, user, setCartItems,
   } = useAppContext();
 
   const [cartArray, setCartArray] = useState([]);
@@ -39,12 +32,10 @@ const Cart = () => {
 
   const getUserAddress = async () => {
     try {
-      const { data } = await axios.get("/api/address/get");
+      const { data } = await api.get("/api/address/get");
       if (data.success) {
         setAddresses(data.addresses);
-        if (data.addresses.length > 0) {
-          setSelectedAddress(data.addresses[0]);
-        }
+        if (data.addresses.length > 0) setSelectedAddress(data.addresses[0]);
       } else {
         toast.error(data.message);
       }
@@ -56,7 +47,6 @@ const Cart = () => {
   const placeOrder = async () => {
     try {
       if (!selectedAddress) return toast.error("Please select an address");
-
       setLoading(true);
 
       const payload = {
@@ -70,8 +60,7 @@ const Cart = () => {
       };
 
       if (paymentOption === "COD") {
-        const { data } = await axios.post("/api/order/cod", payload);
-
+        const { data } = await api.post("/api/order/cod", payload);
         if (data.success) {
           toast.success(data.message);
           setCartItems({});
@@ -80,10 +69,9 @@ const Cart = () => {
           toast.error(data.message);
         }
       } else {
-        const { data } = await axios.post("/api/order/paystack", payload);
-
+        const { data } = await api.post("/api/order/paystack", payload);
         if (data.success && data?.paystack?.authorization_url) {
-          window.location.replace(data.paystack.authorization_url); // Redirect to Paystack
+          window.location.replace(data.paystack.authorization_url);
         } else {
           toast.error(data.message || "Payment initiation failed");
         }
@@ -128,11 +116,7 @@ const Cart = () => {
             <div className="flex items-center md:gap-6 gap-3">
               <div
                 onClick={() => {
-                  navigate(
-                    `/products/${product.category?.toLowerCase()}/${
-                      product._id
-                    }`,
-                  );
+                  navigate(`/products/${product.category?.toLowerCase()}/${product._id}`);
                   scrollTo(0, 0);
                 }}
                 className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded"
@@ -143,67 +127,36 @@ const Cart = () => {
                   alt={product.name}
                 />
               </div>
-              <div cl>
+              <div>
                 <p className="hidden md:block font-semibold">{product.name}</p>
                 <div className="font-normal text-gray-500/70">
                   <p>Weight: {product.weight || "N/A"}</p>
                   <div className="flex items-center mt-1">
                     <p>Qty:</p>
-                    {/* <select
-                      onChange={(e) =>
-                        updateCartItems(product._id, Number(e.target.value))
-                      }
-                      value={cartItems[product._id]}
-                      className="outline-none"
-                    >
-                      {Array.from(
-                        { length: Math.max(9, cartItems[product._id]) },
-                        (_, i) => i + 1
-                      ).map((value) => (
-                        <option key={value} value={value}>
-                          {value}
-                        </option>
-                      ))}
-                    </select> */}
-
                     <input
                       type="number"
                       min={1}
                       value={cartItems[product._id]}
                       onChange={(e) =>
-                        updateCartItems(
-                          product._id,
-                          Math.max(1, Number(e.target.value)),
-                        )
+                        updateCartItems(product._id, Math.max(1, Number(e.target.value)))
                       }
-                      className=" outline-none w-16 text-center border border-gray-300 rounded px-2"
+                      className="outline-none w-16 text-center border border-gray-300 rounded px-2"
                     />
                   </div>
                 </div>
               </div>
             </div>
             <p className="text-center">
-              {currency}
-              {product.offerPrice * product.quantity}
+              {currency}{product.offerPrice * product.quantity}
             </p>
-            <button
-              onClick={() => removeFromCart(product._id)}
-              className="cursor-pointer mx-auto"
-            >
-              <img
-                src={assets.remove_icon}
-                alt="remove"
-                className="inline-block w-6 h-6"
-              />
+            <button onClick={() => removeFromCart(product._id)} className="cursor-pointer mx-auto">
+              <img src={assets.remove_icon} alt="remove" className="inline-block w-6 h-6" />
             </button>
           </div>
         ))}
 
         <button
-          onClick={() => {
-            navigate("/products");
-            scrollTo(0, 0);
-          }}
+          onClick={() => { navigate("/products"); scrollTo(0, 0); }}
           className="group cursor-pointer flex items-center mt-8 gap-2 text-primary font-medium"
         >
           <img
@@ -215,7 +168,7 @@ const Cart = () => {
         </button>
       </div>
 
-      {/* Right Section (Order Summary) */}
+      {/* Right Section */}
       <div className="max-w-[360px] w-full bg-gray-100/40 p-5 max-md:mt-16 border border-gray-300/70">
         <h2 className="text-xl md:text-xl font-medium">Order Summary</h2>
         <hr className="border-gray-300 my-5" />
@@ -239,14 +192,10 @@ const Cart = () => {
                 {addresses.map((address, index) => (
                   <p
                     key={index}
-                    onClick={() => {
-                      setSelectedAddress(address);
-                      setShowAddress(false);
-                    }}
+                    onClick={() => { setSelectedAddress(address); setShowAddress(false); }}
                     className="text-gray-500 p-2 hover:bg-gray-100 cursor-pointer"
                   >
-                    {address.street}, {address.city}, {address.state},{" "}
-                    {address.country}
+                    {address.street}, {address.city}, {address.state}, {address.country}
                   </p>
                 ))}
                 <p
@@ -275,9 +224,7 @@ const Cart = () => {
         <div className="text-gray-500 mt-4 space-y-2">
           <p className="flex justify-between">
             <span>Price</span>
-            <span>
-              {currency} {getCartAmount()}
-            </span>
+            <span>{currency} {getCartAmount()}</span>
           </p>
           <p className="flex justify-between">
             <span>Shipping Fee</span>
@@ -285,15 +232,11 @@ const Cart = () => {
           </p>
           <p className="flex justify-between">
             <span>Tax (2%)</span>
-            <span>
-              {currency} {(getCartAmount() * 2) / 100}
-            </span>
+            <span>{currency} {(getCartAmount() * 2) / 100}</span>
           </p>
           <p className="flex justify-between text-lg font-medium mt-3">
             <span>Total Amount:</span>
-            <span>
-              {currency} {getCartAmount() + (getCartAmount() * 2) / 100}
-            </span>
+            <span>{currency} {getCartAmount() + (getCartAmount() * 2) / 100}</span>
           </p>
         </div>
 
@@ -307,8 +250,8 @@ const Cart = () => {
           {loading
             ? "Processing..."
             : paymentOption === "COD"
-              ? "Place Order"
-              : "Proceed to Checkout"}
+            ? "Place Order"
+            : "Proceed to Checkout"}
         </button>
       </div>
     </div>
